@@ -33,6 +33,7 @@
 from __future__ import print_function
 import rospy
 
+import io
 # HACK workaround for upstream pillow issue python-pillow/Pillow#400
 import sys
 from python_qt_binding import QT_BINDING_MODULES
@@ -49,7 +50,7 @@ from rqt_bag import TimelineCache, TimelineRenderer
 from rqt_bag_plugins import image_helper
 
 from python_qt_binding.QtCore import Qt
-from python_qt_binding.QtGui import QBrush, QPen, QPixmap
+from python_qt_binding.QtGui import QBrush, QImage, QPen, QPixmap
 
 
 class ImageTimelineRenderer(TimelineRenderer):
@@ -127,8 +128,14 @@ class ImageTimelineRenderer(TimelineRenderer):
                     if width > 1:
                         if available_width < thumbnail_width:
                             thumbnail_width = available_width - 1
-                    QtImage = ImageQt(thumbnail_bitmap)
-                    pixmap = QPixmap.fromImage(QtImage)
+                    try:
+                        QtImage = ImageQt(thumbnail_bitmap)
+                        pixmap = QPixmap.fromImage(QtImage)
+                    except TypeError:
+                        buf = io.BytesIO()
+                        thumbnail_bitmap.save(buf, format="PNG")
+                        pixmap = QPixmap.fromImage(QImage.fromData(buf.getvalue(), "PNG"))
+
                     painter.drawPixmap(
                         thumbnail_x, thumbnail_y, thumbnail_width, thumbnail_height, pixmap)
             thumbnail_x += thumbnail_width
