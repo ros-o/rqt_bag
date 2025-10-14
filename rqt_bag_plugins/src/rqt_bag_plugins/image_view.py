@@ -32,6 +32,7 @@
 
 from PIL import Image
 
+import io
 # HACK workaround for upstream pillow issue python-pillow/Pillow#400
 import sys
 from python_qt_binding import QT_BINDING_MODULES
@@ -45,7 +46,7 @@ from PIL.ImageQt import ImageQt
 from rqt_bag import TopicMessageView
 from rqt_bag_plugins import image_helper
 
-from python_qt_binding.QtGui import QPixmap
+from python_qt_binding.QtGui import QImage, QPixmap
 from python_qt_binding.QtWidgets import QGraphicsScene, QGraphicsView
 
 
@@ -108,9 +109,14 @@ class ImageView(TopicMessageView):
                 (int(scale_factor * self._image.size[0]),
                  int(scale_factor * self._image.size[1])),
                 self.quality)
+            try:
+                QtImage = ImageQt(resized_image)
+                pixmap = QPixmap.fromImage(QtImage)
+            except TypeError:
+                buf = io.BytesIO()
+                resized_image.save(buf, format="PNG")
+                pixmap = QPixmap.fromImage(QImage.fromData(buf.getvalue(), "PNG"))
 
-            QtImage = ImageQt(resized_image)
-            pixmap = QPixmap.fromImage(QtImage)
             self._scene.clear()
             self._scene.addPixmap(pixmap)
 
