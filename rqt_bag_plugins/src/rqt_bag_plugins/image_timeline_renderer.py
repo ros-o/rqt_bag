@@ -132,6 +132,7 @@ class ImageTimelineRenderer(TimelineRenderer):
                         QtImage = ImageQt(thumbnail_bitmap)
                         pixmap = QPixmap.fromImage(QtImage)
                     except TypeError:
+                        # handle incompatible Qt versions of ImageQt and QPixmap
                         buf = io.BytesIO()
                         thumbnail_bitmap.save(buf, format="PNG")
                         pixmap = QPixmap.fromImage(QImage.fromData(buf.getvalue(), "PNG"))
